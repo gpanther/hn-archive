@@ -75,7 +75,7 @@ def fetch_items_batch():
     logging.info("Updating last_retrieved_id")
     yield models.LastRetrievedId.set(batch_end_id)
 
-    deferred.defer(fetch_items_batch, _countdown=2)
+    deferred.defer(fetch_items_batch, _countdown=2, _queue='fetch')
 
 
 class FetchMaxItemId(webapp2.RequestHandler):
@@ -94,7 +94,7 @@ class FetchItemsKickoff(webapp2.RequestHandler):
         if memcache.get(TASK_RUNNING_KEY) is not None:
             return
         memcache.set(TASK_RUNNING_KEY, 1, time=180)
-        deferred.defer(fetch_items_batch, _countdown=1)
+        deferred.defer(fetch_items_batch, _countdown=1, _queue='fetch')
 
 
 class Placeholder(webapp2.RequestHandler):
