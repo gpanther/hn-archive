@@ -38,7 +38,11 @@ def guarded_internal_callback(f):
 
 @ndb.tasklet
 def fetch(url):
-    result = yield ndb.get_context().urlfetch(url)
+    result = yield ndb.get_context().urlfetch(
+        url,
+        headers={
+            'User-Agent': "Grey Panther's Hacker News Archiver - https://hn-archive.appspot.com/ "
+    })
     assert result.status_code == 200
     assert not result.content_was_truncated
     raise ndb.Return(result.content)
@@ -47,10 +51,16 @@ def fetch(url):
 @ndb.toplevel
 def fetch_items_batch():
     memcache.set(TASK_RUNNING_KEY, 1, time=60)
-    last_retrieved_id = yield models.LastRetrievedId.get(0)
+    last_retrieved_id, max_item_id = yield [models.LastRetrievedId.get(), models.MaxItemId.get()]
 
     batch_start_id = last_retrieved_id + 1
     batch_end_id = last_retrieved_id + FETCH_BATCH_SIZE
+    batch_end_id = min(batch_end_id, max_item_id)
+
+    if batch_end_id < batch_start_id:
+        logging.info("Pausing since all %d items have been retrieved" % max_item_id)
+        raise ndb.Return()
+
     logging.info("Retrieving items %d..%d", batch_start_id, batch_end_id)
     ids_to_retrieve = range(batch_start_id, batch_end_id + 1)
     jsons = yield [
@@ -83,6 +93,7 @@ class FetchItemsKickoff(webapp2.RequestHandler):
     def get(self):
         if memcache.get(TASK_RUNNING_KEY) is not None:
             return
+        memcache.set(TASK_RUNNING_KEY, 1, time=60)
         deferred.defer(fetch_items_batch, _countdown=1)
 
 
