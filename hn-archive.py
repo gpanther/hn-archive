@@ -50,7 +50,7 @@ def fetch(url):
 
 @ndb.toplevel
 def fetch_items_batch():
-    memcache.set(TASK_RUNNING_KEY, 1, time=60)
+    memcache.set(TASK_RUNNING_KEY, 1, time=180)
     last_retrieved_id, max_item_id = yield [models.LastRetrievedId.get(), models.MaxItemId.get()]
 
     batch_start_id = last_retrieved_id + 1
@@ -93,7 +93,7 @@ class FetchItemsKickoff(webapp2.RequestHandler):
     def get(self):
         if memcache.get(TASK_RUNNING_KEY) is not None:
             return
-        memcache.set(TASK_RUNNING_KEY, 1, time=60)
+        memcache.set(TASK_RUNNING_KEY, 1, time=180)
         deferred.defer(fetch_items_batch, _countdown=1)
 
 
