@@ -1,0 +1,24 @@
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /tasks/.*
+  script: hn-archive.cron_app
+  login: admin
+- url: /.*
+  script: hn-archive.app
+- url: /_ah/queue/deferred
+  script: google.appengine.ext.deferred.deferred.application
+  login: admin
+
+builtins:
+- deferred: on
+
+libraries:
+- name: webapp2
+  version: latest
+- name: jinja2
+  version: latest
+

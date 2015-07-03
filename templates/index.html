@@ -1,0 +1,42 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>HN Archiver</title>
+    <meta name="description" content="Grey Panther's Hacker News Archiver">
+    <meta name="author" content="Grey Panther">
+
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <style>
+    #container {
+      min-height: 90%;
+      min-height: 90vh;
+
+      display: flex;
+      align-items: center;
+    }
+
+    #content {
+        width: 100%;
+        text-align: center;
+    }
+    </style>
+</head>
+
+<body>
+
+<div id="container">
+    <div id="content">
+        <h1>Grey Panther's Hacker News Archiver</h1>
+        <p>Last retrieved Id: {{ '{0:,}'.format(last_retrieved_id | int) }}</p>
+        <p>Max known Id: {{ '{0:,}'.format(max_item_id | int) }}</p>
+    </div>
+</div>
+
+</body>
+</html>
