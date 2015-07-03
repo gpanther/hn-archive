@@ -20,7 +20,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 TASK_RUNNING_KEY = 'fetcher_running'
 
-FETCH_BATCH_SIZE = 10
+FETCH_BATCH_SIZE = 5
 
 
 def guarded_internal_callback(f):
@@ -75,7 +75,7 @@ def fetch_items_batch():
     logging.info("Updating last_retrieved_id")
     yield models.LastRetrievedId.set(batch_end_id)
 
-    deferred.defer(fetch_items_batch, _countdown=1)
+    deferred.defer(fetch_items_batch, _countdown=2)
 
 
 class FetchMaxItemId(webapp2.RequestHandler):
