@@ -33,8 +33,9 @@
 <div id="container">
     <div id="content">
         <h1>Grey Panther's Hacker News Archiver</h1>
-        <p>Last retrieved Id: {{ '{0:,}'.format(last_retrieved_id | int) }}</p>
-        <p>Max known Id: {{ '{0:,}'.format(max_item_id | int) }}</p>
+        <p>Last retrieved Id: {{ last_retrieved_id | add_thousands_separator }}</p>
+        <p>Max known Id: {{ max_item_id | add_thousands_separator }}</p>
+        <p>Inaccesible: {{ inaccessible_entries | add_thousands_separator }}</p>
     </div>
 </div>
 

@@ -17,10 +17,11 @@ IS_LOCAL_DEV_SERVER = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')),
     autoescape=True)
+JINJA_ENVIRONMENT.filters['add_thousands_separator'] = lambda value: '{0:,}'.format(value)
 
 TASK_RUNNING_KEY = 'fetcher_running'
 
-FETCH_BATCH_SIZE = 5
+FETCH_BATCH_SIZE = 10
 
 
 def guarded_internal_callback(f):
@@ -37,20 +38,26 @@ def guarded_internal_callback(f):
 
 
 @ndb.tasklet
-def fetch(url):
+def fetch_raw(url):
     result = yield ndb.get_context().urlfetch(
         url,
         headers={
             'User-Agent': "Grey Panther's Hacker News Archiver - https://hn-archive.appspot.com/ "
     })
-    assert result.status_code == 200
     assert not result.content_was_truncated
+    raise ndb.Return(result)
+
+
+@ndb.tasklet
+def fetch(url):
+    result = yield fetch_raw(url)
+    assert result.status_code == 200
     raise ndb.Return(result.content)
 
 
 @ndb.toplevel
 def fetch_items_batch():
-    memcache.set(TASK_RUNNING_KEY, 1, time=180)
+    memcache.set(TASK_RUNNING_KEY, 1, time=600)
     last_retrieved_id, max_item_id = yield [models.LastRetrievedId.get(), models.MaxItemId.get()]
 
     batch_start_id = last_retrieved_id + 1
@@ -61,19 +68,33 @@ def fetch_items_batch():
         logging.info("Pausing since all %d items have been retrieved" % max_item_id)
         raise ndb.Return()
 
-    logging.info("Retrieving items %d..%d", batch_start_id, batch_end_id)
+    logging.info("Retrieving items %d..%d (inclusive)", batch_start_id, batch_end_id)
     ids_to_retrieve = range(batch_start_id, batch_end_id + 1)
-    jsons = yield [
-        fetch('https://hacker-news.firebaseio.com/v0/item/%d.json' % i)
+    fetch_results = yield [
+        fetch_raw('https://hacker-news.firebaseio.com/v0/item/%d.json' % i)
         for i in ids_to_retrieve
     ]
 
-    logging.info("Retrieved items, storing them")
-    yield [
-        models.HNEntry(id=i, body=json).put_async() for i, json in zip(ids_to_retrieve, jsons)]
+    inaccessible_entries = len([r for r in fetch_results if r.status_code != 200])
+    if inaccessible_entries == FETCH_BATCH_SIZE:
+        logging.error("All %d entries returned an error, pausing for a while" % FETCH_BATCH_SIZE)
+        raise ndb.Return()
 
-    logging.info("Updating last_retrieved_id")
-    yield models.LastRetrievedId.set(batch_end_id)
+    logging.info("Retrieved items, storing them")
+    futures = []
+    for i, result in zip(ids_to_retrieve, fetch_results):
+        if result.status_code == 200:
+            m = models.HNEntry(id=i, body=result.content)
+        else:
+            m = models.InaccessibleHNEntry(id=i, error_code=result.status_code)
+        futures.append(m.put_async())
+    yield futures
+
+    logging.info("Updating counters")
+    yield [
+        models.LastRetrievedId.set(batch_end_id),
+        models.InaccessibleEntryCount.increment(inaccessible_entries),
+    ]
 
     deferred.defer(fetch_items_batch, _countdown=2, _queue='fetch')
 
@@ -93,20 +114,25 @@ class FetchItemsKickoff(webapp2.RequestHandler):
     def get(self):
         if memcache.get(TASK_RUNNING_KEY) is not None:
             return
-        memcache.set(TASK_RUNNING_KEY, 1, time=180)
+        memcache.set(TASK_RUNNING_KEY, 1, time=600)
         deferred.defer(fetch_items_batch, _countdown=1, _queue='fetch')
 
 
 class Placeholder(webapp2.RequestHandler):
     @ndb.toplevel
     def get(self):
-        values = yield [models.LastRetrievedId.get(), models.MaxItemId.get()]
+        values = {
+            'last_retrieved_id': models.LastRetrievedId.get(),
+            'max_item_id': models.MaxItemId.get(),
+            'inaccessible_entries': models.InaccessibleEntryCount.get(),
+        }
+
+        retrieved_values = yield values.values()
+        for k, v in zip(values.keys(), retrieved_values):
+            values[k] = v
 
         template = JINJA_ENVIRONMENT.get_template('index.html')
-        self.response.write(template.render({
-            'last_retrieved_id': values[0],
-            'max_item_id': values[1],
-        }))
+        self.response.write(template.render(values))
 
 
 app = webapp2.WSGIApplication([
