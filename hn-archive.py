@@ -21,7 +21,7 @@ JINJA_ENVIRONMENT.filters['add_thousands_separator'] = lambda value: '{0:,}'.for
 
 TASK_RUNNING_KEY = 'fetcher_running'
 
-FETCH_BATCH_SIZE = 10
+FETCH_BATCH_SIZE = 1
 
 
 def guarded_internal_callback(f):
@@ -96,7 +96,7 @@ def fetch_items_batch():
         models.InaccessibleEntryCount.increment(inaccessible_entries),
     ]
 
-    deferred.defer(fetch_items_batch, _countdown=2, _queue='fetch')
+    deferred.defer(fetch_items_batch, _countdown=10, _queue='fetch')
 
 
 class FetchMaxItemId(webapp2.RequestHandler):
