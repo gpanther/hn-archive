@@ -58,7 +58,7 @@ def fetch(url):
 @ndb.toplevel
 def fetch_items_batch():
     memcache.set(TASK_RUNNING_KEY, 1, time=600)
-    last_retrieved_id, max_item_id = yield [models.LastRetrievedId.get(), models.MaxItemId.get()]
+    last_retrieved_id, max_item_id = yield [models.LastRetrievedId.get(default=0), models.MaxItemId.get()]
 
     batch_start_id = last_retrieved_id + 1
     batch_end_id = last_retrieved_id + FETCH_BATCH_SIZE

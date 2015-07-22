@@ -37,11 +37,11 @@ class InaccessibleEntryCount(_IntValueStore):
 
 
 class HNEntry(ndb.Model):
-    retrieved_at = ndb.DateTimeProperty(auto_now_add=True)
+    retrieved_at = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
     body = ndb.JsonProperty(compressed=True)
 
 
 class InaccessibleHNEntry(ndb.Model):
-    retrieved_at = ndb.DateTimeProperty(auto_now_add=True)
+    retrieved_at = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
     error_code = ndb.IntegerProperty()
 
