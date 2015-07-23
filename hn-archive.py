@@ -12,6 +12,8 @@ from webapp2_extras import routes
 
 import models
 
+ENABLE_DATASTORE_WRITES = True
+
 IS_LOCAL_DEV_SERVER = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -58,6 +60,9 @@ def fetch(url):
 @ndb.toplevel
 def fetch_items_batch():
     memcache.set(TASK_RUNNING_KEY, 1, time=600)
+    if not ENABLE_DATASTORE_WRITES:
+        logging.info("Datastore writes disabled, sleeping")
+        return
     last_retrieved_id, max_item_id = yield [models.LastRetrievedId.get(default=0), models.MaxItemId.get()]
 
     batch_start_id = last_retrieved_id + 1
@@ -103,6 +108,9 @@ class FetchMaxItemId(webapp2.RequestHandler):
     @guarded_internal_callback
     @ndb.toplevel
     def get(self):
+        if not ENABLE_DATASTORE_WRITES:
+            logging.info("Datastore writes disabled, sleeping")
+            return
         result = yield fetch('https://hacker-news.firebaseio.com/v0/maxitem.json')
         assert int(result) > 0
         logging.info("MaxItemId: %d" % int(result))
@@ -112,6 +120,9 @@ class FetchMaxItemId(webapp2.RequestHandler):
 class FetchItemsKickoff(webapp2.RequestHandler):
     @guarded_internal_callback
     def get(self):
+        if not ENABLE_DATASTORE_WRITES:
+            logging.info("Datastore writes disabled, sleeping")
+            return
         if memcache.get(TASK_RUNNING_KEY) is not None:
             return
         memcache.set(TASK_RUNNING_KEY, 1, time=600)
