@@ -143,6 +143,9 @@ class Placeholder(webapp2.RequestHandler):
             values[k] = v
 
         template = JINJA_ENVIRONMENT.get_template('index.html')
+        self.response.cache_control = 'public'
+        self.response.cache_control.max_age = 300
+        self.response.headers.add('pragma', 'public')
         self.response.write(template.render(values))
 
 
