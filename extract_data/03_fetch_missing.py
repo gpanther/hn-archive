@@ -17,7 +17,7 @@ def fetch_from_algolia(comment_id):
 def fetch_from_site(comment_id):
     opener = urllib2.build_opener()
     # add your session cookie here to see dead comments
-    opener.addheaders.append(('Cookie', 'user=cdman&4sWufESKwKDHVpBzetJN6Yp7kmjIEXQm'))
+    opener.addheaders.append(('Cookie', ''))
     r = opener.open('https://news.ycombinator.com/item?id=%d' % comment_id)
     if r.getcode() != 200:
         return None

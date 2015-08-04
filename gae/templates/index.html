@@ -26,7 +26,7 @@
         text-align: center;
     }
 
-    #subscribe {
+    .left-align {
         text-align: left;
         width: 30%;
         margin-left: auto;
@@ -47,7 +47,12 @@
         <p>Max known Id: {{ max_item_id | add_thousands_separator }}</p>
         <p>Inaccesible: {{ inaccessible_entries | add_thousands_separator }}</p>
 
-        <div id="subscribe">
+        <div class="left-align">
+            You can download the first 10,002,378 stories / comments using <a href="static/10m_hn_comments_sorted.torrent">this torrent</a>
+            (or <a href="magnet:?xt=urn:btih:44c65b5779d9d8021e002584fa73740f36d052a6&dn=10m_hn_comments_sorted">this magnet link</a>).
+            Subscribe below to get further updates for this project.
+        </div>
+        <div class="left-align">
             <!-- Begin MailChimp Signup Form -->
             <link href="//cdn-images.mailchimp.com/embedcode/classic-081711.css" rel="stylesheet" type="text/css">
             <style type="text/css">
