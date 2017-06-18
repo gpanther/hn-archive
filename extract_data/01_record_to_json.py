@@ -7,15 +7,14 @@ import time
 import zlib
 
 # Make sure App Engine APK is available
-sys.path.append('/usr/local/google_appengine')
+sys.path.append('/usr/lib/google-cloud-sdk/platform/google_appengine')
 
 from google.appengine.api.files import records
 from google.appengine.datastore import entity_pb
 from google.appengine.api import datastore
 
 min_id, max_id = sys.maxint, 0
-for backup_directory in sys.argv[1:]:
-    for filename in glob.glob(backup_directory + '/*_HNEntry-*'):
+for filename in sys.argv[1:]:
         print >> sys.stderr, 'Loading %s' % filename
         raw = open(filename, 'r')
         reader = records.RecordsReader(raw)
