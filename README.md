@@ -1,3 +1,3 @@
 # hn-archive
 
-A Google App Engine application to archive the posts from Hacker News through their API. It's running at https://hn-archive.appspot.com/
+This project is no longer maintained. Please see the [HackerNews dataset on BigQuery](https://cloud.google.com/bigquery/public-data/hacker-news) for an alternative.

@@ -1,8 +1,8 @@
 cron:
-- description: fetch the current maximum item id
-  url: /tasks/fetch_max_item_id
-  schedule: every 1 hours
-- description: kickoff fetching of batches
-  url: /tasks/kickoff_fetch_items
-  schedule: every 1 minutes
+#- description: fetch the current maximum item id
+#  url: /tasks/fetch_max_item_id
+#  schedule: every 1 hours
+#- description: kickoff fetching of batches
+#  url: /tasks/kickoff_fetch_items
+#  schedule: every 1 minutes
 

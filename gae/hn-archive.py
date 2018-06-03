@@ -12,7 +12,7 @@ from webapp2_extras import routes
 
 import models
 
-ENABLE_DATASTORE_WRITES = True
+ENABLE_DATASTORE_WRITES = False
 
 IS_LOCAL_DEV_SERVER = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
